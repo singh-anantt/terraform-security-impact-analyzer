@@ -1,0 +1,10 @@
+scenario_id,scenario_name,change_type,expected_new_risk,expected_permission_change,expected_trust_change,notes
+E01,Harmless variable addition,harmless,FALSE,FALSE,FALSE,Adds a Terraform variable without changing IAM
+E02,Ordinary S3 permission added,permission_expansion,FALSE,TRUE,FALSE,Adds s3:PutObject to the policy
+E03,Policy version modification actions added,policy_version_risk,TRUE,TRUE,FALSE,Adds iam:CreatePolicyVersion and iam:SetDefaultPolicyVersion
+E04,Trust changed from user to role,trust_change,TRUE,FALSE,TRUE,Changes the principal trusted by app_role
+E05,New admin path introduced,graph_path,TRUE,FALSE,TRUE,Adds a path from Developer to AdminAccess
+E06,Existing admin path unchanged,existing_path,FALSE,FALSE,FALSE,Path existed before the upgrade
+E07,Permission removed,permission_removal,FALSE,TRUE,FALSE,Removes an existing permission
+E08,Permission and trust both changed,combined_change,TRUE,TRUE,TRUE,Combines permission expansion with a trust change
+E09,Privilege escalation actions split across attached policies,split_policy_risk,TRUE,TRUE,FALSE,Second policy adds iam:SetDefaultPolicyVersion to a role that already has iam:CreatePolicyVersion through another attached policy

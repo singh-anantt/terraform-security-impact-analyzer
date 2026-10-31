@@ -1,0 +1,4 @@
+Developer -> ReadOnlyRole
+ReadOnlyRole -> ReadS3
+Developer -> AdminRole
+AdminRole -> AdminAccess

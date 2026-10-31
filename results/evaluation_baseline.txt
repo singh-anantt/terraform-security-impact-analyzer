@@ -1,0 +1,64 @@
+=== Terraform Upgrade Evaluation ===
+
+E01: Harmless variable addition
+  Added actions: []
+  Removed actions: []
+  Permission-change check: PASS
+  Trust-change check: N/A (not checked for this scenario)
+
+E02: Ordinary S3 permission added
+  Added actions: ['s3:PutObject']
+  Removed actions: []
+  Permission-change check: PASS
+  Trust-change check: N/A (not checked for this scenario)
+
+E03: Policy version modification actions added
+  Added actions: ['iam:CreatePolicyVersion', 'iam:SetDefaultPolicyVersion']
+  Removed actions: []
+  Permission-change check: PASS
+  Policy-version risk predicted: True
+  Policy-risk check: PASS
+  Trust-change check: N/A (not checked for this scenario)
+
+E04: Trust changed from user to role
+  Added trust relationships: [('arn:aws:iam::111122223333:role/admin-role', 'role:app-role')]
+  Removed trust relationships: [('arn:aws:iam::111122223333:user/developer', 'role:app-role')]
+  Trust-change check: PASS
+  Permission-change check: N/A (not checked for this scenario)
+
+E05: New admin path introduced
+  Old admin path: None
+  New admin path: ['Developer', 'AdminRole', 'AdminAccess']
+  Added edges: [('AdminRole', 'AdminAccess'), ('Developer', 'AdminRole')]
+  New admin path detected: True
+  Expected new risk: True
+  Scenario result: PASS
+
+E06: Existing admin path unchanged
+  Old admin path: ['Developer', 'AdminRole', 'AdminAccess']
+  New admin path: ['Developer', 'AdminRole', 'AdminAccess']
+  Added edges: []
+  New admin path detected: False
+  Expected new risk: False
+  Scenario result: PASS
+
+E07: Permission removed
+  Added actions: []
+  Removed actions: ['s3:PutObject']
+  Permission-change check: PASS
+  Trust-change check: N/A (not checked for this scenario)
+
+E08: Permission and trust both changed
+  Added actions: ['s3:PutObject']
+  Removed actions: []
+  Added trust relationships: [('arn:aws:iam::111122223333:role/admin-role', 'role:app-role')]
+  Removed trust relationships: [('arn:aws:iam::111122223333:user/developer', 'role:app-role')]
+  Permission-change check: PASS
+  Trust-change check: PASS
+
+Scenarios evaluated: 8/8
+Checks passed: 10
+Checks failed: 0
+E05/E06 use synthetic graph fixtures, not Terraform-derived graphs.
+PASS/FAIL checks cover the implemented permission, trust, and graph-fixture scenarios.
+Overall accuracy, precision, and recall are not calculated.

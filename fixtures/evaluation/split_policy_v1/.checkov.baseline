@@ -1,0 +1,17 @@
+{
+    "failed_checks": [
+        {
+            "file": "/main.tf",
+            "findings": [
+                {
+                    "resource": "aws_iam_policy.create_version",
+                    "check_ids": [
+                        "CKV_AWS_286",
+                        "CKV_AWS_289",
+                        "CKV_AWS_355"
+                    ]
+                }
+            ]
+        }
+    ]
+}
