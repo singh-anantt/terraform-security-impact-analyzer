@@ -1,136 +1,161 @@
- do not prove exploitability.# Security-Impact Analysis of Terraform Module Upgrades
 
- ## 1. Problem Statement
 
- Terraform module upgrades can introduce unintended IAM permission expansion, trust relationship changes, and potential privilege-escalation risks. These changes may be difficult to identify through a normal configuration review.
 
- ## 2. Project Objective
 
- Develop a software-only static analysis tool that compares Terraform configurations before and after an upgrade and highlights potentially security-relevant changes before deployment.
 
- ## 3. Implemented Features
 
- - Detect added and removed IAM actions.
- - Compare IAM trust relationships between Terraform versions.
- - Report resource-level permission changes with evidence files.
- - Aggregate selected IAM actions across attached policies.
- - Detect heuristic managed-policy version risks.
- - Compare candidate policy-version findings between configurations.
- - Evaluate selected attack-path scenarios using synthetic graph fixtures.
- - Run repeatable evaluation scenarios and automated tests.
 
- ## 4. Project Workflow
 
- 1. Read old and new Terraform configuration directories.
- 2. Extract supported IAM actions and trust relationships.
- 3. Compare configuration changes.
- 4. Aggregate supported IAM actions across attached policies.
- 5. Identify potential security-sensitive changes.
- 6. Generate candidate findings with supporting evidence.
- 7. Evaluate implemented checks against controlled scenarios.
 
- ## 5. Requirements
 
- - Python 3.9 or later
- - Checkov
- - python-hcl2
- - pytest
 
- ## 6. Setup
 
- Create and activate a virtual environment:
 
- ```bash
- python3 -m venv .venv
- source .venv/bin/activate
- ```
+# Security-Impact Analysis of Terraform Module Upgrades
 
- Install dependencies:
+A software-only static analysis prototype that compares Terraform configurations before and after module upgrades to identify selected security-sensitive IAM changes before deployment.
 
- ```bash
- pip install -r requirements.txt
- ```
+## 1. Problem Statement
 
- ## 7. Running the Project
+Terraform module upgrades can introduce unintended IAM permission expansion, trust relationship changes, and potentially risky authorization changes. These changes may be difficult to identify through ordinary configuration review.
 
- Run the main analyzer:
+## 2. Project Objective
 
- ```bash
- python src/upgrade_analyzer.py
- ```
+Develop a static analysis tool that compares old and new Terraform configurations and highlights potentially security-relevant changes before deployment.
 
- Run the permission evaluation:
+## 3. Implemented Features
 
- ```bash
- python src/run_permission_evaluation.py
- ```
+- Detect added and removed IAM actions.
+- Compare IAM trust relationships between Terraform versions.
+- Identify selected resource-level permission changes.
+- Detect potential IAM resource-scope expansion and restriction.
+- Aggregate selected IAM actions across attached policies.
+- Identify selected managed-policy version modification risks.
+- Detect selected changes in synthetic attack-path graph scenarios.
+- Identify redundant IAM policy detachment where an action remains available through another attached policy.
+- Generate repeatable evaluation reports.
 
- Compare two Terraform configurations:
+## 4. Project Workflow
 
- ```bash
- python src/upgrade_analyzer.py --old fixtures/v1 --new fixtures/v2
- ```
+1. Load old and new Terraform configuration directories.
+2. Extract supported IAM actions and trust relationships.
+3. Compare permission and trust changes.
+4. Analyze selected resource scopes.
+5. Aggregate supported actions across attached policies.
+6. Identify potentially security-sensitive changes.
+7. Report findings with available evidence.
+8. Evaluate implemented functionality using controlled scenarios.
 
- ## 8. Running Tests
+## 5. Requirements
 
- Run the automated test suite:
+- Python 3.9 or later
+- python-hcl2
+- pytest
+- Checkov for the separately conducted baseline comparison
 
- ```bash
- python -m pytest -v
- ```
+## 6. Setup
 
- Run preliminary risk metrics:
+Create and activate a virtual environment:
 
- ```bash
- python src/risk_metrics.py
- ```
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
- ## 9. Evaluation and Results
+Install dependencies:
 
- The prototype was evaluated using controlled Terraform fixture scenarios.
+```bash
+pip install -r requirements.txt
+```
 
- ### Functional Testing
+## 7. Running the Project
 
- - Total automated tests: 20
- - Passed tests: 20
- - Failed tests: 0
+Run the main analyzer:
 
- Tested scenarios include permission addition, permission removal, trust relationship changes, harmless configuration changes, split-policy permission aggregation, and selected attack-path scenarios.
+```bash
+python src/upgrade_analyzer.py
+```
 
- The permission evaluation script also passed 9 out of 9 controlled scenarios.
+Run the permission evaluation:
 
- ### Preliminary Risk Metrics
+```bash
+PYTHONPATH=src python src/run_permission_evaluation.py
+```
 
- Results from five controlled fixture pairs:
+Compare two Terraform configurations:
 
- | Metric | Result |
- |---|---:|
- | True Positives | 2 |
- | False Positives | 0 |
- | False Negatives | 0 |
- | True Negatives | 3 |
- | Accuracy | 100% |
- | Precision | 100% |
- | Recall | 100% |
- | F1-score | 100% |
+```bash
+python src/upgrade_analyzer.py --old fixtures/v1 --new fixtures/v2
+```
 
- These results are preliminary and based on a small controlled fixture set. They do not represent real-world cloud security performance.
+## 8. Running Tests
 
- ## 10. Comparison with Checkov
+Run the automated test suite:
 
- Checkov version 3.3.30 was used as a baseline static-analysis tool.
+```bash
+PYTHONPATH=src python -m pytest -v
+```
 
- In the tested configurations, Checkov identified several IAM security misconfigurations, including wildcard resource permissions and privilege-escalation-related policy concerns.
+## 9. Evaluation and Results
 
- The proposed tool focuses on comparing old and upgraded Terraform configurations. It identifies added or removed IAM actions, trust relationship changes, and selected role-level candidate risks.
+The current evaluation uses 13 controlled scenarios (E01–E13).
 
- The experiments demonstrate differences in analysis workflow and are not evidence that the proposed tool is superior to Checkov.
+| Evaluation measure | Result |
+|---|---:|
+| Scenarios evaluated | 13/13 |
+| Evaluation checks passed | 21 |
+| Evaluation checks failed | 0 |
+| Automated pytest tests passed | 24/24 |
+| Automated pytest tests failed | 0 |
 
- ## 11. Limitations
+### Scenarios Covered
 
- - Supports only implemented Terraform and IAM patterns.
- - Uses heuristic rules for managed-policy version risk detection.
- - Does not verify permissions against a live AWS account.
- - Some attack-path graph scenarios use synthetic fixtures.
- - Evaluation uses a limited set of controlled scenarios.
- - Findings are static-analysis candidates and do not prove exploitability.
+- E01: Harmless variable addition
+- E02: Ordinary S3 permission addition
+- E03: Policy version modification actions
+- E04: Trust relationship change
+- E05: New administrative path
+- E06: Existing administrative path unchanged
+- E07: Permission removal
+- E08: Combined permission and trust changes
+- E09: Actions split across attached policies
+- E10: S3 resource scope expansion
+- E11: Harmless IAM policy tag change
+- E12: IAM resource scope restriction
+- E13: Redundant IAM policy detachment
+
+### E13 Observation
+
+The evaluation detected the removal of policy_a from app_role. The s3:GetObject action remained available through policy_b, so the aggregate role action set remained unchanged.
+
+### Evaluation Output
+
+The reproducible evaluation output is saved at:
+
+`results/evaluation_E01_E13.txt`
+
+The written evaluation summary is saved at:
+
+`results/evaluation_summary.md`
+
+These results demonstrate successful checks on the implemented controlled scenarios. Overall accuracy, precision, recall, and F1-score have not been calculated for the current evaluation.
+
+## 10. Comparison with Checkov
+
+Checkov version 3.3.30 was used as a baseline static-analysis tool in the earlier comparison.
+
+The proposed prototype focuses on comparing old and upgraded Terraform configurations. Its analysis includes selected IAM action changes, trust relationship changes, resource-scope changes, and role-level candidate risks.
+
+The comparison concerns differences in analysis workflow and scope. It does not establish that the proposed prototype is superior to Checkov.
+
+## 11. Limitations
+
+- Supports only the implemented Terraform and IAM patterns.
+- The current IAM parser handles a limited fixture format and is not a complete Terraform or IAM policy evaluator.
+- Role-level aggregation uses an action-set proxy and does not establish actual AWS effective permissions.
+- Resource conditions, explicit deny precedence, permission boundaries, and session policies are not fully evaluated.
+- E05 and E06 use synthetic graph fixtures, not Terraform-derived graphs.
+- The managed-policy version risk detector uses heuristic rules.
+- The prototype does not verify permissions against a live AWS account.
+- The evaluation uses a limited set of controlled scenarios.
+- Findings are static-analysis candidates and do not prove exploitability.
