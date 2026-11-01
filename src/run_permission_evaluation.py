@@ -11,6 +11,7 @@ from graph_builder import find_path, compare_graphs
 from risk_prediction import predict_introduced_policy_risk
 from policy_version_checker import check_policy_version_risk
 from regression_detector import resource_map, compare_resource_scopes
+from role_permission_mapper import map_role_policy_actions, map_role_permissions
 
 DATASET = ROOT / "evaluation_dataset.csv"
 
@@ -325,6 +326,93 @@ def main():
 
             passed += int(permission_check) + int(trust_check)
             failed += int(not permission_check) + int(not trust_check)
+
+            evaluated += 1
+            continue
+
+        if scenario_id == "E13":
+            old_dir = ROOT / "fixtures" / "evaluation" / "E13_v1"
+            new_dir = ROOT / "fixtures" / "evaluation" / "E13_v2"
+
+            if not old_dir.is_dir() or not new_dir.is_dir():
+                print("  PENDING: E13 fixture directory missing")
+                continue
+
+            old_mappings = map_role_policy_actions(str(old_dir))
+            new_mappings = map_role_policy_actions(str(new_dir))
+
+            old_permissions = map_role_permissions(str(old_dir))
+            new_permissions = map_role_permissions(str(new_dir))
+
+            old_keys = {
+                (m["role"], m["policy"]) for m in old_mappings
+            }
+            new_keys = {
+                (m["role"], m["policy"]) for m in new_mappings
+            }
+
+            detached = sorted(old_keys - new_keys)
+
+            retained_details = []
+            removed_actions = []
+
+            for role, policy in detached:
+                old_mapping = next(
+                    m for m in old_mappings
+                    if m["role"] == role and m["policy"] == policy
+                )
+
+                for action in old_mapping["actions"]:
+                    retained_by = [
+                        m["policy"] for m in new_mappings
+                        if m["role"] == role
+                        and m["policy"] != policy
+                        and action in m["actions"]
+                    ]
+
+                    if retained_by:
+                        retained_details.append({
+                            "role": role,
+                            "detached_policy": policy,
+                            "action": action,
+                            "retained_through": retained_by,
+                        })
+                    else:
+                        removed_actions.append({
+                            "role": role,
+                            "policy": policy,
+                            "action": action,
+                        })
+
+            attachment_check = bool(detached)
+            retention_check = bool(retained_details)
+
+            permission_changed = old_permissions != new_permissions
+            expected_permission = (
+                scenario["expected_permission_change"].strip().upper()
+                == "TRUE"
+            )
+            permission_check = permission_changed == expected_permission
+
+            print("  Detached attachments:", detached)
+            print("  Actions retained through other policies:", retained_details)
+            print("  Actions no longer present in role action set:", removed_actions)
+            print("  Aggregate role action-set changed:", permission_changed)
+
+            print("  Detachment check:", "PASS" if attachment_check else "FAIL")
+            print("  Redundant-detachment check:", "PASS" if retention_check else "FAIL")
+            print("  Aggregate permission check:", "PASS" if permission_check else "FAIL")
+
+            passed += (
+                int(attachment_check)
+                + int(retention_check)
+                + int(permission_check)
+            )
+            failed += (
+                int(not attachment_check)
+                + int(not retention_check)
+                + int(not permission_check)
+            )
 
             evaluated += 1
             continue

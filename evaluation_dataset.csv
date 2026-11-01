@@ -11,3 +11,4 @@ E09,Privilege escalation actions split across attached policies,split_policy_ris
 E10,S3 resource scope expansion,resource_scope_expansion,TRUE,FALSE,FALSE,Same s3:GetObject action changes from a specific bucket ARN to wildcard Resource *
 E11,Harmless IAM policy tag change,harmless,FALSE,FALSE,FALSE,Changes only IAM policy metadata tag; permissions and trust remain unchanged
 E12,IAM resource scope restriction,resource_scope_restriction,FALSE,FALSE,FALSE,Changes s3:GetObject resource from wildcard to a specific bucket ARN
+E13,Redundant IAM policy detachment,policy_attachment_change,FALSE,FALSE,FALSE,One attached policy is removed while another attached policy continues to provide the same IAM action
