@@ -155,6 +155,66 @@ def main():
             continue
 
         # E11: Harmless IAM policy tag change
+        # E12: IAM resource-scope restriction
+        if scenario_id == "E12":
+            old_dir = ROOT / "fixtures" / "evaluation" / "E12_v1"
+            new_dir = ROOT / "fixtures" / "evaluation" / "E12_v2"
+
+            if not old_dir.is_dir() or not new_dir.is_dir():
+                print("  PENDING: E12 fixture directory missing")
+                continue
+
+            old_resources = resource_map(old_dir)
+            new_resources = resource_map(new_dir)
+
+            scope_changes = []
+
+            for key in sorted(set(old_resources) | set(new_resources)):
+                scope_changes.extend(
+                    compare_resource_scopes(
+                        old_resources.get(key),
+                        new_resources.get(key),
+                    )
+                )
+
+            restriction_detected = any(
+                item["change_type"] == "SCOPE RESTRICTION"
+                for item in scope_changes
+            )
+
+            expansion_detected = any(
+                item["change_type"] == "POTENTIAL SCOPE EXPANSION"
+                for item in scope_changes
+            )
+
+            old_actions = extract_iam_actions(str(old_dir / "main.tf"))
+            new_actions = extract_iam_actions(str(new_dir / "main.tf"))
+            action_changed = old_actions != new_actions
+
+            expected_permission = (
+                scenario["expected_permission_change"].strip().upper() == "TRUE"
+            )
+            expected_risk = (
+                scenario["expected_new_risk"].strip().upper() == "TRUE"
+            )
+
+            restriction_check = restriction_detected
+            risk_check = expansion_detected == expected_risk
+            permission_check = action_changed == expected_permission
+
+            print("  Resource-scope changes:", scope_changes)
+            print("  Scope restriction detected:", restriction_detected)
+            print("  Potential scope expansion detected:", expansion_detected)
+            print("  IAM action change detected:", action_changed)
+            print("  Scope-restriction check:", "PASS" if restriction_check else "FAIL")
+            print("  Risk check:", "PASS" if risk_check else "FAIL")
+            print("  Permission-change check:", "PASS" if permission_check else "FAIL")
+
+            passed += int(restriction_check) + int(risk_check) + int(permission_check)
+            failed += int(not restriction_check) + int(not risk_check) + int(not permission_check)
+            evaluated += 1
+            continue
+
         if scenario_id == "E11":
             old_file = ROOT / "fixtures" / "evaluation" / "E11_v1" / "main.tf"
             new_file = ROOT / "fixtures" / "evaluation" / "E11_v2" / "main.tf"
