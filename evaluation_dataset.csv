@@ -9,3 +9,4 @@ E07,Permission removed,permission_removal,FALSE,TRUE,FALSE,Removes an existing p
 E08,Permission and trust both changed,combined_change,TRUE,TRUE,TRUE,Combines permission expansion with a trust change
 E09,Privilege escalation actions split across attached policies,split_policy_risk,TRUE,TRUE,FALSE,Second policy adds iam:SetDefaultPolicyVersion to a role that already has iam:CreatePolicyVersion through another attached policy
 E10,S3 resource scope expansion,resource_scope_expansion,TRUE,FALSE,FALSE,Same s3:GetObject action changes from a specific bucket ARN to wildcard Resource *
+E11,Harmless IAM policy tag change,harmless,FALSE,FALSE,FALSE,Changes only IAM policy metadata tag; permissions and trust remain unchanged
