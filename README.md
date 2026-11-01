@@ -148,6 +148,27 @@ The proposed prototype focuses on comparing old and upgraded Terraform configura
 
 The comparison concerns differences in analysis workflow and scope. It does not establish that the proposed prototype is superior to Checkov.
 
+### Checkov Controlled Comparison
+
+Checkov 3.3.30 was executed against the `fixtures/v1` and `fixtures/v2` Terraform configurations.
+
+| Checkov policy | v1 | v2 | v2 without `iam:CreatePolicyVersion` |
+|---|---|---|---|
+| CKV_AWS_288 | FAIL | FAIL | FAIL |
+| CKV_AWS_355 | FAIL | FAIL | FAIL |
+| CKV_AWS_289 | PASS | FAIL | PASS |
+| CKV_AWS_286 | PASS | FAIL | PASS |
+
+A controlled test was performed using a temporary copy of the v2 fixture with the added `iam:CreatePolicyVersion` action removed. CKV_AWS_289 and CKV_AWS_286 changed from FAIL to PASS, while the other two findings remained unchanged.
+
+This provides fixture-specific evidence associating the added IAM action with the two Checkov findings. It does not establish an exploitable privilege-escalation path.
+
+The detailed experiment output is available in:
+
+`results/checkov_controlled_comparison.txt`
+
+This comparison demonstrates complementary analysis approaches: Checkov identifies policy violations, while the prototype explicitly attributes selected IAM changes to differences between Terraform configurations.
+
 ## 11. Limitations
 
 - Supports only the implemented Terraform and IAM patterns.

@@ -1,0 +1,23 @@
+Checkov Controlled Comparison
+Version: 3.3.30
+
+Experiment:
+1. Original v1 Terraform fixture
+2. Upgraded v2 Terraform fixture
+3. Temporary v2 copy with iam:CreatePolicyVersion removed
+
+Results:
+                         v1       v2       v2 without added action
+CKV_AWS_288              FAIL     FAIL     FAIL
+CKV_AWS_355              FAIL     FAIL     FAIL
+CKV_AWS_289              PASS     FAIL     PASS
+CKV_AWS_286              PASS     FAIL     PASS
+
+Observation:
+In this controlled fixture, removing iam:CreatePolicyVersion
+caused CKV_AWS_289 and CKV_AWS_286 to pass again.
+The two other failures remained unchanged.
+
+This is fixture-specific evidence of an association between
+the added IAM action and the two Checkov findings.
+It is not proof of an exploitable privilege-escalation path.
