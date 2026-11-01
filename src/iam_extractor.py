@@ -1,6 +1,4 @@
-
 import re
-from pathlib import Path
 import hcl2
 
 
@@ -15,23 +13,27 @@ def extract_iam_actions(file_path):
             if resource_type.strip('"') != "aws_iam_policy":
                 continue
 
-            for resource_name, config in instances.items():
+            for config in instances.values():
                 policy = config.get("policy", "")
 
-                # Handle policy values returned as strings or dictionaries
-                if isinstance(policy, str):
-                    matches = re.findall(r'"([^"]+:[^"]+)"', policy)
-                    actions.update(
-                        action for action in matches
-                        if not action.startswith("${")
+                if isinstance(policy, list):
+                    policy = " ".join(str(item) for item in policy)
+
+                if not isinstance(policy, str):
+                    continue
+
+                match = re.search(
+                    r"'Action'\s*:\s*\[(.*?)\]",
+                    policy,
+                    re.DOTALL
+                )
+
+                if match:
+                    matches = re.findall(
+                        r"'([^']+:[^']+)'",
+                        match.group(1)
                     )
-                elif isinstance(policy, (dict, list)):
-                    text = str(policy)
-                    matches = re.findall(r'["\']([^"\']+:[^"\']+)["\']', text)
-                    actions.update(
-                        action for action in matches
-                        if not action.startswith("${")
-                    )
+                    actions.update(matches)
 
     return actions
 
@@ -43,4 +45,5 @@ if __name__ == "__main__":
     print("Old IAM actions:", sorted(old_actions))
     print("New IAM actions:", sorted(new_actions))
     print("Added IAM actions:", sorted(new_actions - old_actions))
-    print("Removed IAM actions:", sorted(old_actions - new_actions))
+    print("Removed IAM actions:", sorted(old_actions - new_actions))             
+                           

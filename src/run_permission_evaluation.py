@@ -10,7 +10,7 @@ from trust_graph import extract_trust_edges, compare_trust_edges
 from graph_builder import find_path, compare_graphs
 from risk_prediction import predict_introduced_policy_risk
 from policy_version_checker import check_policy_version_risk
-
+from regression_detector import resource_map, compare_resource_scopes
 DATASET = ROOT / "evaluation_dataset.csv"
 
 
@@ -149,6 +149,48 @@ def main():
             evaluated += 1
             continue
 
+        if scenario_id == "E10":
+            old_dir = ROOT / "fixtures" / "resource_scope_v1"
+            new_dir = ROOT / "fixtures" / "resource_scope_v2"
+
+            if not old_dir.is_dir() or not new_dir.is_dir():
+                print("  PENDING: resource-scope fixture missing")
+                continue
+
+            old_resources = resource_map(old_dir)
+            new_resources = resource_map(new_dir)
+
+            scope_changes = []
+
+            for key in sorted(set(old_resources) | set(new_resources)):
+                changes = compare_resource_scopes(
+                    old_resources.get(key),
+                    new_resources.get(key)
+                )
+                scope_changes.extend(changes)
+
+            expansion_detected = any(
+                change["change_type"] == "POTENTIAL SCOPE EXPANSION"
+                for change in scope_changes
+            )
+
+            expected_risk = (
+                scenario["expected_new_risk"].strip().upper() == "TRUE"
+            )
+
+            risk_check = expansion_detected == expected_risk
+
+            print("  Resource-scope changes:", scope_changes)
+            print("  Scope expansion detected:", expansion_detected)
+            print("  Expected new risk:", expected_risk)
+            print("  Resource-scope check:", "PASS" if risk_check else "FAIL")
+
+            passed += int(risk_check)
+            failed += int(not risk_check)
+            evaluated += 1
+            continue
+
+
         if scenario_id not in fixture_map:
             print("  PENDING: fixtures not yet mapped")
             continue
@@ -249,7 +291,7 @@ def main():
     print(f"Checks passed: {passed}")
     print(f"Checks failed: {failed}")
     print("E05/E06 use synthetic graph fixtures, not Terraform-derived graphs.")
-    print("PASS/FAIL checks cover the implemented permission, trust, and graph-fixture scenarios.")
+    print("PASS/FAIL checks cover implemented permission, trust, policy-version, resource-scope, and graph-fixture scenarios.")
     print("Overall accuracy, precision, and recall are not calculated.")
 
 
